@@ -13,7 +13,8 @@ setup(name='this_package',
       version=package_version.version,
       description='This package',
       author='Your name',
-      author_email='your_email@head.cfa.harvard.edu',
+      author_email='your_email@cfa.harvard.edu',
       url='http://www.python.org/',
       packages=['versioning'],  # ['this_package']
+      package_data={'versioning': ['GIT_VERSION']},  # {'this_package': ['GIT_VERSION']}
       )

@@ -1,22 +1,39 @@
 """
-Version numbering. The `major`, `minor`, and `bugfix`
-variables hold the respective parts of the version number (bugfix is '0' if
-absent). The `release` variable is True if this is a release, and False if this
-is a development version. For the actual version string, use::
+Version numbering template.
 
-    from mica import version
+This file is intended to be copied into a project and provide version information,
+including git version values.  It is copied instead of used as a module to ensure
+that projects can always run their setup.py with no external dependency.
 
-or::
+The `major`, `minor`, and `bugfix` variables hold the respective parts
+of the version number.  Basic usage is to copy this file into your package directory
+alongside __init__.py.  Then use as follows::
 
-    from mica import __version__
+  from package.version import version_object
+  from package.version import __version__  # version_object.version
 
-NOTE: this code copied from astropy and modified.  Any license restrictions
-therein are applicable.
+In addition to ``major``, ``minor``, ``bugfix``, and ``dev`` attributes, the object
+``version_object`` has a number of useful attributes::
+
+  version            Including git info if dev=True    0.5 or 0.5dev-r21-123acf1
+  git_version        Always including git info         0.5dev-r21-123acf1
+  semantic_version   Never including git info          0.5dev
+  git_sha            Git 7-digit SHA tag               123acf1
+  git_revs           Git revision count                21
+
+See ``setup.py`` in the ``versioning`` package for an example of what needs to
+be done there.  The key step is ``version_object.write_git_version_file()``
+in order to create a package file ``git_version.py`` alongside ``version.py``
+which retains the git information outside of the git repo.
 """
 
 import os
 
-VERSION = (0, 1, None, False)  # Major, Minor, Bugfix, Dev
+############################
+### SET THESE VALUES
+############################
+# Major, Minor, Bugfix, Dev
+VERSION = (0, 1, None, False)
 
 
 class SemanticVersion(object):
@@ -47,7 +64,7 @@ class SemanticVersion(object):
             git_revs = git_version.revs
             git_sha = git_version.sha
 
-        except ImportError:
+        except:
             from subprocess import Popen, PIPE
             p = Popen(['git', 'rev-list', 'HEAD'], cwd=self.version_dir,
                       stdout=PIPE, stderr=PIPE, stdin=PIPE)
@@ -107,9 +124,11 @@ class SemanticVersion(object):
         typically during `python setup.py sdist`
         """
         git_version_filename = os.path.join(self.version_dir, 'git_version.py')
+        git_revs = self.git_revs
+        git_sha = self.git_sha
         with open(git_version_filename, 'w') as fh:
-            fh.write('revs={!r}; sha={!r}'.format(self.git_revs, self.git_sha))
+            fh.write('revs={!r}; sha={!r}'.format(git_revs, git_sha))
 
 
-version = SemanticVersion(*VERSION)
-__version__ = version.version
+version_object = SemanticVersion(*VERSION)
+__version__ = version_object.version

@@ -36,7 +36,7 @@ class SemanticVersion(object):
         self.minor = minor
         self.bugfix = bugfix
         self.dev = dev
-        self.version_dir = os.path.abspath(os.path.split(__file__)[0])
+        self.version_dir = os.path.abspath(os.path.dirname(__file__))
 
     def _get_git_info(self):
         """

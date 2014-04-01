@@ -15,7 +15,6 @@ therein are applicable.
 """
 
 import os
-from os import path
 
 VERSION = (0, 1, None, False)  # Major, Minor, Bugfix, Dev
 
@@ -37,7 +36,7 @@ class SemanticVersion(object):
         self.minor = minor
         self.bugfix = bugfix
         self.dev = dev
-        self.version_dir = path.abspath(path.split(__file__)[0])
+        self.version_dir = os.path.abspath(os.path.split(__file__)[0])
 
     def _get_git_info(self):
         """
@@ -77,7 +76,7 @@ class SemanticVersion(object):
 
     @property
     def git_version_filename(self):
-        return path.join(self.version_dir, GIT_VERSION_FILENAME)
+        return os.path.join(self.version_dir, GIT_VERSION_FILENAME)
 
     @property
     def semantic_version(self):

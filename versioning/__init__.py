@@ -17,13 +17,15 @@ therein are applicable.
 import os
 from os import path
 
+VERSION = (0, 1, None, False)  # Major, Minor, Bugfix, Dev
+
 GIT_VERSION_FILENAME = 'GIT_VERSION'
 
 
-class Version(object):
-    def __init__(self, major=0, minor=None, bugfix=None, dev=False, version_filename=None):
+class SemanticVersion(object):
+    def __init__(self, major=0, minor=None, bugfix=None, dev=False):
         """
-        Semantic version object
+        Semantic version object with support for git revisions
 
         :param major: Major version
         :param minor: Minor version
@@ -35,8 +37,7 @@ class Version(object):
         self.minor = minor
         self.bugfix = bugfix
         self.dev = dev
-        self.version_dir = (os.getcwd() if version_filename is None
-                            else path.abspath(path.split(version_filename)[0]))
+        self.version_dir = path.abspath(path.split(__file__)[0])
 
     def _get_git_info(self):
         """
@@ -52,18 +53,34 @@ class Version(object):
         if p.returncode != 0:
             if os.path.exists(self.git_version_filename):
                 with open(self.git_version_filename, 'r') as fh:
-                    revision, git_sha = fh.read().strip().split()
-                    revision = int(revision)
+                    git_revs, git_sha = fh.read().strip().split()
+                    git_revs = int(git_revs)
             else:
-                revision, git_sha = None, None
+                git_revs, git_sha = None, None
         else:
-            revs = stdout.decode('ascii').split('\n')
-            revision, git_sha = len(revs), revs[0][:7]
+            revs = stdout.split('\n')
+            git_revs, git_sha = len(revs), revs[0][:7]
 
-        return revision, git_sha
+        return git_revs, git_sha
 
     @property
-    def version(self):
+    def git_revs(self):
+        if not hasattr(self, '_git_revs'):
+            self._git_revs, self._git_sha = self._get_git_info()
+        return self._git_revs
+
+    @property
+    def git_sha(self):
+        if not hasattr(self, '_git_sha'):
+            self._git_revs, self._git_sha = self._get_git_info()
+        return self._git_sha
+
+    @property
+    def git_version_filename(self):
+        return path.join(self.version_dir, GIT_VERSION_FILENAME)
+
+    @property
+    def semantic_version(self):
         _version = '{}'.format(self.major)
         if self.minor is not None:
             _version += '.{}'.format(self.minor)
@@ -74,38 +91,30 @@ class Version(object):
         return _version
 
     @property
-    def revision(self):
-        if not hasattr(self, '_revision'):
-            self._revision, self._git_sha = self._get_git_info()
-        return self._revision
-
-    @property
-    def git_sha(self):
-        if not hasattr(self, '_git_sha'):
-            self._revision, self._git_sha = self._get_git_info()
-        return self._git_sha
-
-    @property
-    def git_version_filename(self):
-        return path.join(self.version_dir, GIT_VERSION_FILENAME)
-
-    @property
     def git_version(self):
         """
         Get the full version with git hashtag and release from GIT_VERSION, e.g.
         0.5dev-r190-423abc1
         """
         if not hasattr(self, '_git_version'):
-            self._git_version = self.version
-            if self.revision and self.git_sha:
-                self._git_version += '-r{0}-{1}'.format(self.revision, self.get_sha)
+            self._git_version = self.semantic_version
+            if self.git_revs and self.git_sha:
+                self._git_version += '-r{0}-{1}'.format(self.git_revs, self.git_sha)
 
         return self._git_version
 
-    def make_git_version_file(self):
+    @property
+    def version(self):
+        return self.git_version if self.dev else self.semantic_version
+
+    def write_git_version_file(self):
         """
         Make the full version with git hashtag and release from GIT_VERSION,
         typically during `python setup.py sdist`
         """
         with open(self.git_version_filename, 'w') as fh:
-            fh.write(self.git_version)
+            fh.write('{} {}'.format(self.git_revs, self.git_sha))
+
+
+version = SemanticVersion(*VERSION)
+__version__ = version.version

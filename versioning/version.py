@@ -143,4 +143,5 @@ class SemanticVersion(object):
 
 package_version = SemanticVersion(*VERSION)
 __version__ = package_version.version
+__git_version__ = package_version.git_version
 version = __version__  # For back-compatibility with legacy version.py

@@ -124,11 +124,17 @@ class SemanticVersion(object):
         typically during `python setup.py sdist`
         """
         git_version_filename = os.path.join(self.version_dir, 'git_version.py')
+
+        # Remove any existing git_version.py[c] files
+        if os.path.exists(git_version_filename):
+            os.unlink(git_version_filename)
+        if os.path.exists(git_version_filename + 'c'):
+            os.unlink(git_version_filename + 'c')
+
         git_revs = self.git_revs
         git_sha = self.git_sha
         with open(git_version_filename, 'w') as fh:
             fh.write('revs={!r}; sha={!r}'.format(git_revs, git_sha))
 
 
-version_object = SemanticVersion(*VERSION)
-__version__ = version_object.version
+package_version = SemanticVersion(*VERSION)

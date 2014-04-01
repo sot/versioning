@@ -59,10 +59,11 @@ class SemanticVersion(object):
         this is not possible.
         """
         try:
-            # First try getting git version from ./git_version.py
-            from . import git_version
-            git_revs = git_version.revs
-            git_sha = git_version.sha
+            # First try getting git version from self.version_dir/GIT_VERSION
+            git_version_filename = os.path.join(self.version_dir, 'GIT_VERSION')
+            with open(git_version_filename, 'r') as fh:
+                git_revs, git_sha = fh.read().strip().split()
+                git_revs = int(git_revs)
 
         except:
             from subprocess import Popen, PIPE
@@ -123,18 +124,22 @@ class SemanticVersion(object):
         Make the full version with git hashtag and release from GIT_VERSION,
         typically during `python setup.py sdist`
         """
-        git_version_filename = os.path.join(self.version_dir, 'git_version.py')
+        git_version_filename = os.path.join(self.version_dir, 'GIT_VERSION')
 
-        # Remove any existing git_version.py[c] files
+        # Remove any existing GIT_VERSION file
         if os.path.exists(git_version_filename):
             os.unlink(git_version_filename)
-        if os.path.exists(git_version_filename + 'c'):
-            os.unlink(git_version_filename + 'c')
+
+        # Remove existing attributes
+        for attr in ('_git_revs', '_git_sha'):
+            if hasattr(self, attr):
+                delattr(self, attr)
 
         git_revs = self.git_revs
         git_sha = self.git_sha
         with open(git_version_filename, 'w') as fh:
-            fh.write('revs={!r}; sha={!r}'.format(git_revs, git_sha))
+            fh.write('{} {}'.format(git_revs, git_sha))
 
 
 package_version = SemanticVersion(*VERSION)
+__version__ = package_version.version

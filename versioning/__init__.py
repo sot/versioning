@@ -1,3 +1,1 @@
-from .version import package_version
-__version__ = package_version.version
-print('HEY!!!!')
+from .version import __version__
